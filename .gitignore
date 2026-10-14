@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.next/
+.astro/
+.docusaurus/
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.idea/
+.venv/
+coverage/
