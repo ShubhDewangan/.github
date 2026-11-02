@@ -6,25 +6,46 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      # Step 1: Explicitly check out code to workspace root
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - name: Install Dependencies
-        run: pnpm install
+      # Step 3: Setup Node.js with caching
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
 
+      # Step 4: Run install from repo root
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+        working-directory: ${{ github.workspace }}
+
+      # Step 5: Build monorepo packages
       - name: Build Warden Engine
         run: pnpm build
 
+      # Step 6: Execute scan and output SARIF
       - name: Run Warden Scan
         run: node packages/cli/dist/index.js scan . --sarif warden-results.sarif
         continue-on-error: true
 
+      # Step 7: Push SARIF to GitHub Security tab
       - name: Upload SARIF Report
         uses: github/codeql-action/upload-sarif@v3
         with:
